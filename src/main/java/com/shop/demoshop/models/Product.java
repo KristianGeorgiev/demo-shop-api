@@ -6,7 +6,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "Products")
-public class Product {
+public class Product implements Comparable<Product>{
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -65,5 +65,10 @@ public class Product {
 
     public void setSubscribers(Set<Subscriber> subscribers) {
         this.subscribers = subscribers;
+    }
+
+    @Override
+    public int compareTo(Product product) {
+        return product.subscribers.size() - this.subscribers.size();
     }
 }

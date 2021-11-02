@@ -2,6 +2,7 @@ package com.shop.demoshop.controllers;
 
 import com.shop.demoshop.models.Subscriber;
 import com.shop.demoshop.repositories.SubscriberRepository;
+import com.shop.demoshop.utils.SubscriberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,23 +41,21 @@ public class SubscriberController {
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public Subscriber update(@RequestBody Subscriber subscriber, @PathVariable long id) {
+    public Subscriber update(@RequestBody Subscriber newSubscriber, @PathVariable long id) {
         try {
-            Subscriber oldSubscriber = subscriberRepository.findById(id).get();
+            Subscriber subscriber = subscriberRepository.findById(id).get();
 
-            oldSubscriber.setFirstName(subscriber.getFirstName());
-            oldSubscriber.setLastName(subscriber.getLastName());
+            SubscriberUtils.updateSubscriber(subscriber, newSubscriber);
 
-            if (subscriber.getDateJoined() != null)
-                oldSubscriber.setDateJoined(subscriber.getDateJoined());
-
-            if (subscriber.getProducts() != null)
-                oldSubscriber.setProducts(subscriber.getProducts());
-
-            return subscriberRepository.save(oldSubscriber);
-        } catch (NoSuchElementException e) {
             return subscriberRepository.save(subscriber);
+        } catch (NoSuchElementException e) {
+            return subscriberRepository.save(newSubscriber);
         }
+    }
+
+    @RequestMapping(value = "/all", method = RequestMethod.GET)
+    public long getNumberOfSubscribers() {
+        return subscriberRepository.findAll().size();
     }
 
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
