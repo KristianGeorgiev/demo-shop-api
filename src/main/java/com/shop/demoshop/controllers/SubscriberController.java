@@ -6,6 +6,7 @@ import com.shop.demoshop.utils.SubscriberUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Date;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -27,7 +28,7 @@ public class SubscriberController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public Subscriber getById(@PathVariable long id) {
+    public Subscriber getById(@PathVariable int id) {
         try {
             return subscriberRepository.findById(id).get();
         } catch (NoSuchElementException e) {
@@ -36,19 +37,19 @@ public class SubscriberController {
     }
 
     @RequestMapping(value = "/getAllByProduct/{id}", method = RequestMethod.GET)
-    public List<Subscriber> getAllByProduct(@PathVariable long id) {
+    public List<Subscriber> getAllByProduct(@PathVariable int id) {
         return subscriberRepository.findByProducts_Id(id);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public Subscriber update(@RequestBody Subscriber newSubscriber, @PathVariable long id) {
+    public Subscriber update(@RequestBody Subscriber newSubscriber, @PathVariable int id) {
         try {
-            Subscriber subscriber = subscriberRepository.findById(id).get();
+            Subscriber subscriber = subscriberRepository.getById(id);
 
             SubscriberUtils.updateSubscriber(subscriber, newSubscriber);
 
             return subscriberRepository.save(subscriber);
-        } catch (NoSuchElementException e) {
+        } catch (EntityNotFoundException e) {
             return subscriberRepository.save(newSubscriber);
         }
     }
@@ -59,7 +60,7 @@ public class SubscriberController {
     }
 
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable long id) {
+    public void delete(@PathVariable int id) {
         subscriberRepository.deleteById(id);
     }
 }

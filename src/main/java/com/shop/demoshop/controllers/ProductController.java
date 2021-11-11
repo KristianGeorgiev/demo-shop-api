@@ -1,21 +1,18 @@
 package com.shop.demoshop.controllers;
 
-import com.shop.demoshop.exceptions.DateFormatException;
+import com.shop.demoshop.exceptions.CustomEntityNotFoundException;
 import com.shop.demoshop.models.Product;
 import com.shop.demoshop.repositories.ProductRepository;
 import com.shop.demoshop.utils.ProductUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import javax.persistence.EntityNotFoundException;
 import java.util.*;
 
 @RestController
 @RequestMapping("/products")
 public class ProductController {
-
-    private static final String EXPECTED_DATE_FORMAT = "dd-MM-yyyy";
 
     @Autowired
     private ProductRepository productRepository;
@@ -30,65 +27,48 @@ public class ProductController {
     }
 
     @RequestMapping(value = "/get/{id}", method = RequestMethod.GET)
-    public Product getById(@PathVariable long id) {
+    public Product getById(@PathVariable int id) {
         try {
             return productRepository.findById(id).get();
         } catch (NoSuchElementException e) {
-            return null;
+            throw new CustomEntityNotFoundException();
         }
     }
 
     @RequestMapping(value = "/getAllBySubscriber/{id}")
-    public List<Product> getAllBySubscriberId(@PathVariable long id) {
+    public List<Product> getAllBySubscriberId(@PathVariable int id) {
         return productRepository.findBySubscribers_Id(id);
     }
 
-    @RequestMapping(value = "/getTop3")
-    public List<Product> getTop3() {
+    @RequestMapping(value = "/getTop/{size}")
+    public List<Product> getMostPopular(@PathVariable int size) {
         List<Product> allProducts = productRepository.findAll();
 
-        Collections.sort(allProducts);
-
-        return ProductUtils.getTop(allProducts, 3);
+        return ProductUtils.getTop(allProducts, size);
     }
 
     @RequestMapping(value = "/get/{dateString}/{isActive}")
-    public List<Product> getAllByStatus(@PathVariable String dateString, @PathVariable boolean isActive) {
+    public int getAllByStatusAndDate(@PathVariable String dateString, @PathVariable boolean isActive) {
         List<Product> products = productRepository.findAll();
-        List<Product> productsToReturn = new ArrayList<>();
 
-        for (Product product : products) {
-            try {
-                Date date = new SimpleDateFormat(EXPECTED_DATE_FORMAT).parse(dateString);
-
-                Date dateFromDB = product.getCreationDate();
-
-                if (isActive == product.isAvailable() && date.compareTo(ProductUtils.setTimeToZero(dateFromDB)) == 0) {
-                    productsToReturn.add(product);
-                }
-            } catch (ParseException e){
-                throw new DateFormatException();
-            }
-        }
-
-        return productsToReturn;
+        return ProductUtils.filterProducts(products, dateString, isActive);
     }
 
     @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
-    public Product update(@RequestBody Product newProduct, @PathVariable long id) {
+    public Product update(@RequestBody Product newProduct, @PathVariable int id) {
         try {
-            Product product = productRepository.findById(id).get();
+            Product product = productRepository.getById(id);
 
             ProductUtils.updateProduct(product, newProduct);
 
             return productRepository.save(product);
-        } catch (NoSuchElementException e) {
-            return productRepository.save(newProduct);
+        } catch (EntityNotFoundException e) {
+            throw new CustomEntityNotFoundException();
         }
     }
 
     @RequestMapping(value = "/delete/{id}", method = RequestMethod.DELETE)
-    public void delete(@PathVariable long id) {
+    public void delete(@PathVariable int id) {
         productRepository.deleteById(id);
     }
 }

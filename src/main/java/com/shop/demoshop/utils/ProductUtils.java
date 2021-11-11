@@ -1,30 +1,27 @@
 package com.shop.demoshop.utils;
 
+import com.shop.demoshop.exceptions.DateFormatException;
 import com.shop.demoshop.models.Product;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class ProductUtils {
 
-    public static Date setTimeToZero(Date date) {
-        Calendar calendar = Calendar.getInstance();
-
-        calendar.setTime(date);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-
-        return calendar.getTime();
-    }
+    private static final String EXPECTED_DATE_FORMAT = "dd-MM-yyyy hh:mm:ss";
+    private static final String FULL_TIME_REGEX = "\\d{2}-\\d{2}-\\d{4} \\d{2}:\\d{2}:\\d{2}";
+    private static final String BEGIN_OF_DAY_TIME = " 00:00:00";
 
     public static List<Product> getTop(List<Product> products, int maxSize) {
-        List<Product> topProducts = new ArrayList<Product>(maxSize);
+        List<Product> topProducts = new ArrayList<>(maxSize);
+
+        Collections.sort(products);
 
         for (int i = 0; i < maxSize; i++) {
+            if (i >= products.size())
+                break;
+
             topProducts.add(products.get(i));
         }
 
@@ -40,5 +37,26 @@ public class ProductUtils {
 
         if (newProduct.getSubscribers() != null)
             product.setSubscribers(newProduct.getSubscribers());
+    }
+
+    public static int filterProducts(List<Product> products,String dateString, boolean isActive) {
+        int numberOfProducts = 0;
+
+        for (Product product : products) {
+            try {
+                Date date = new SimpleDateFormat(EXPECTED_DATE_FORMAT).parse(
+                        dateString.matches(FULL_TIME_REGEX) ? dateString : dateString + BEGIN_OF_DAY_TIME);
+
+                Date dateFromDB = product.getCreationDate();
+
+                if (isActive == product.isAvailable() && date.compareTo(dateFromDB) <= 0) {
+                    numberOfProducts++;
+                }
+            } catch (ParseException e){
+                throw new DateFormatException();
+            }
+        }
+
+        return numberOfProducts;
     }
 }

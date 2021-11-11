@@ -1,17 +1,24 @@
 package com.shop.demoshop.models;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.persistence.*;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Set;
 
 @Entity
 @Table(name = "Subscribers")
+@JsonIdentityInfo(
+        generator = ObjectIdGenerators.PropertyGenerator.class,
+        property = "id")
 public class Subscriber {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private int id;
 
     @Column(name = "FirstName", nullable = false)
     private String firstName;
@@ -28,11 +35,11 @@ public class Subscriber {
     public Subscriber() {
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -66,5 +73,17 @@ public class Subscriber {
 
     public void setProducts(Set<Product> products) {
         this.products = products;
+    }
+
+    @Override
+    public String toString() {
+        // Returning JSON string
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(this);
+        }
+        catch (IOException e) {
+            return null;
+        }
     }
 }
